@@ -19,6 +19,8 @@ public class Block {
     private String p1ID;
     private String p2ID;
     private final String blockProducer;
+    private final long timestamp;
+    private final int maxConsensusList;
 
 
 
@@ -30,9 +32,11 @@ public class Block {
         this.blockProducer = blockProducer;
         this.p1ID = p1ID;
         this.p2ID = p2ID;
-        this.vdfDifficulty = 300000;  // for now hardcoded, but can be decided dynamically by the network
+        this.vdfDifficulty = 100000;  // for now hardcoded, but can be decided dynamically by the network
         // block hash is calculated last since it includes all the rest of the data of the block in order to be calculated
         this.blockHash = calculateBlockHash();
+        this.timestamp = Instant.now().getEpochSecond();
+        this.maxConsensusList = 3;
     }
 
 
@@ -47,7 +51,7 @@ public class Block {
                             modulo.toString() +
                             previousBlockHash +
                             previousConsensusNodeList.toString() +
-                            blockProducer +
+                            blockProducer + timestamp +
                             vdfDifficulty;
 
             byte[] hashBytes = digest.digest(blockData.getBytes());
@@ -89,7 +93,9 @@ public class Block {
         return previousConsensusNodeList;
     }
 
-
+    public int getMaxConsensusList() {
+        return maxConsensusList;
+    }
 
     public int getBlockNumber() {
         return blockNumber;

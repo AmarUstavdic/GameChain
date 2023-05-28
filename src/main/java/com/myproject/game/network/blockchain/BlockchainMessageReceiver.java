@@ -36,7 +36,6 @@ public class BlockchainMessageReceiver implements Runnable {
             public void completed(AsynchronousSocketChannel clientSocketChannel, Object attachment) {
                 serverSocketChannel.accept(null, this); // Accept the next connection
                 handleMessage(clientSocketChannel);
-                System.out.println("New message has been received");
             }
 
             @Override
@@ -47,7 +46,10 @@ public class BlockchainMessageReceiver implements Runnable {
     }
 
     private void handleMessage(AsynchronousSocketChannel clientSocketChannel) {
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+        // this was the reason why our implementation was lacking
+        ByteBuffer buffer = ByteBuffer.allocate(16384);
+
         clientSocketChannel.read(buffer, null, new CompletionHandler<>() {
             @Override
             public void completed(Integer bytesRead, Object attachment) {
@@ -56,12 +58,10 @@ public class BlockchainMessageReceiver implements Runnable {
                     String jsonMessage = new String(buffer.array(), 0, bytesRead, StandardCharsets.UTF_8);
                     // Process the received message
 
-
-                    System.out.println(jsonMessage);
-
+                    //System.out.println(jsonMessage);
 
                     BlockchainMessage blockchainMessage = gson.fromJson(jsonMessage, BlockchainMessage.class);
-
+                    System.out.println(blockchainMessage.toJson());
 
                     try {
                         inbox.addMessage(blockchainMessage);
@@ -69,8 +69,6 @@ public class BlockchainMessageReceiver implements Runnable {
                         throw new RuntimeException(e);
                     }
                 }
-
-                // Clear the buffer and prepare for the next read
                 buffer.clear();
                 clientSocketChannel.read(buffer, null, this);
             }

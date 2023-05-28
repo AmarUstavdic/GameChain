@@ -2,6 +2,7 @@ package com.myproject.game.network.blockchain;
 
 
 import com.google.common.eventbus.EventBus;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.myproject.game.ebus.EventType;
 import com.myproject.game.network.kademlia.KademliaDHT;
@@ -59,15 +60,33 @@ public class BlockchainMessageHandler implements Runnable {
             }
             switch (message.getType()) {
                 case SYNC:
-                    System.out.println("I have received sync request!");
-                    System.out.println(new Gson().toJson(message));
-                    System.out.println(new Gson().toJson(chain));
+                    // when node receives SYNC request it splices its chain and sends the rest of the chan
+                    // in order to sync node that initiated SYNC
+                    System.out.println("received sync message");
+
+
+                    try {
+                        outbox.addMessage(new BlockchainMessage(
+                                BlockchainMessageType.SYNC_REPLY,
+                                new Gson().toJson(blockchain.getChain()))
+                        );
+                    } catch (InterruptedException e) {
+                        System.out.println("unable to reply on sync");
+                        throw new RuntimeException(e);
+                    }
+
+
+                    //handleSync(message);
+                    break;
+                case SYNC_REPLY:
+                    blockchain.syncChain(new Gson().fromJson(message.getPayload(), new TypeToken<ArrayList<Block>>() {}.getType()));
+                    System.out.println("synced the chain");
                     break;
                 case NEW_BLOCK:
                     System.out.println("I have received new block");
                     addNewBlockToChain(message);
                     eventBus.post(EventType.PTP_ESTABLISHED);
-
+                    broadcastNewBlock(message);
                     break;
                 case INCLUSION_REQUEST:
                     System.out.println("inclusion request sent");
@@ -84,6 +103,42 @@ public class BlockchainMessageHandler implements Runnable {
                 default:
                     // for the rest doing nothing
                     break;
+            }
+        }
+    }
+
+
+    private void handleSync(BlockchainMessage message) {
+        Gson gson = new Gson();
+        String lastNodesBlock = message.getPayload();
+        if (lastNodesBlock.equals("null")) {
+            // send entire blockchain to the node that requested sync
+            BlockchainMessage syncReply = new BlockchainMessage(
+                    BlockchainMessageType.SYNC_REPLY,
+                    gson.toJson(blockchain.getChain())
+            );
+            try {
+                outbox.addMessage(syncReply);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+        } else {
+            // splice the chain and send only the part that node who requested sync does not have
+            int nodesLastBlockId = Integer.parseInt(message.getPayload());
+
+            // get the chain
+            ArrayList<Block> splicedChain = blockchain.getRequestedPartOfChain(nodesLastBlockId);
+
+            // serialize it and put the message in the outbox
+            BlockchainMessage syncReply = new BlockchainMessage(
+                    BlockchainMessageType.SYNC_REPLY,
+                    gson.toJson(splicedChain)
+            );
+            try {
+                outbox.addMessage(syncReply);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
     }

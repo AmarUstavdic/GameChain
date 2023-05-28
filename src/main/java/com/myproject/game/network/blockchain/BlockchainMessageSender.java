@@ -46,6 +46,10 @@ public class BlockchainMessageSender implements Runnable {
             switch (message.getType()) {
                 case SYNC:
                     sendSyncRequest(message);
+                    System.out.println("sync message has been sent");
+                    break;
+                case SYNC_REPLY:
+                    broadcastMessage(message);
                     break;
                 case NEW_BLOCK:
                     broadcastNewBlock(message);

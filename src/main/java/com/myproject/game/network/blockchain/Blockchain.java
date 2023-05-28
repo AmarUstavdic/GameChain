@@ -9,6 +9,7 @@ import com.myproject.game.ui.GameScene2;
 import com.myproject.game.ui.MatchmakingScene;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +48,7 @@ public class Blockchain {
         this.outbox = new BlockchainOutbox();
         this.matchRequestList = new MatchRequestList();
         this.inclusionRequestsList = new InclusionRequestsList();
-        this.VDFService = new VDFService(eventBus,matchRequestList,inclusionRequestsList, vdf, this, dht, outbox);
+        this.VDFService = new VDFService(vdf, this,dht,outbox, inclusionRequestsList,matchRequestList);
         this.messageHandler = new BlockchainMessageHandler(eventBus,matchRequestList,inclusionRequestsList, VDFService,dht,inbox, outbox, chain,4, port, 1000, this);
         this.sender = new BlockchainMessageSender(dht, outbox, port,1000, 4);
         this.receiver = new BlockchainMessageReceiver(port, inbox);
@@ -80,7 +81,17 @@ public class Blockchain {
 
 
 
+    // NECESSARY FOR SYNCING
+    public ArrayList<Block> getRequestedPartOfChain(int lastBlockId) {
+        // Splice the ArrayList from index 1 (inclusive) to index 4 (exclusive)
+        List<Block> splicedChain = chain.subList(lastBlockId+1, chain.size()-1);
+        return (ArrayList<Block>) splicedChain;
+    }
 
+    // incase we need to send entire chain we do so
+    public ArrayList<Block> getChain() {
+        return chain;
+    }
 
 
 
@@ -103,18 +114,32 @@ public class Blockchain {
             ));
         } else {
             // send a SYNC request to the closest node, in order to synchronize the chain
-            // jebem si mater
             vdf.setup(2048, "SHA-256");
+            // SYNC NEEDS TO BE DONE FIRST
+            String payload;
+            if (isChainEmpty()) payload = "0";
+            else payload = String.valueOf(getLastBlock().getBlockNumber());
+
+            BlockchainMessage syncMessage = new BlockchainMessage(
+                    BlockchainMessageType.SYNC,
+                    payload
+            );
+
+            try {
+                outbox.addMessage(syncMessage);
+            } catch (InterruptedException e) {
+                System.out.println("unable to add sync message to outbox");
+            }
+
+            // INCLUSION REQUEST OK
             BlockchainMessage inclusionRequest = new BlockchainMessage(
                     BlockchainMessageType.INCLUSION_REQUEST,
                     dht.getNodeId()
             );
             try {
                 outbox.addMessage(inclusionRequest);
-                System.out.println("inclusion request was added to the outbox");
             } catch (InterruptedException e) {
                 System.out.println("inclusion request was not added to the outbox");
-
             }
         }
 
@@ -144,8 +169,8 @@ public class Blockchain {
         this.newBlock = newBlock;
     }
 
-    public ArrayList<Block> getChain() {
-        return chain;
+    public void syncChain(ArrayList<Block> blockArrayList) {
+        chain.addAll(blockArrayList);
     }
 
     public boolean isChainEmpty() {

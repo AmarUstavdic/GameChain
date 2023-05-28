@@ -25,6 +25,14 @@ public class InclusionRequestsList {
         inclusionRequests.clear();
     }
 
-
+    public ArrayList<String> getInclusionRequestIDs() {
+        ArrayList<String> inclusionRequestIDs = new ArrayList<>();
+        for (BlockchainMessage message : inclusionRequests) {
+            inclusionRequestIDs.add(message.getPayload());
+        }
+        inclusionRequests.clear();
+        inclusionRequests.clear();
+        return inclusionRequestIDs;
+    }
 
 }
