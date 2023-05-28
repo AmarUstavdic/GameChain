@@ -63,3 +63,9 @@ Moving forward, we have an exciting roadmap ahead for the Decentralized Turn-Bas
 
 **User Feedback and Iteration**: We highly value user feedback and will actively seek insights from our community. This input will be crucial in refining and improving our system to meet the needs and expectations of players.
 
+## References
+
+
+[1] [Author(s). "Implementation Study of Two Verifiable Delay Functions." Journal/Conference Name, Year.](https://www.researchgate.net/publication/349760306_Implementation_Study_of_Two_Verifiable_Delay_Functions)
+
+[2] [DHT Walkthrough Notes] (https://gist.github.com/gubatron/cd9cfa66839e18e49846)
