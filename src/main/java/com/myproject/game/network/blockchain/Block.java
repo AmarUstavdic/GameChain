@@ -16,27 +16,26 @@ public class Block {
     private final String previousBlockHash;
     private final String blockHash;
     private final ArrayList<String> previousConsensusNodeList;
-    private String p1ID;
-    private String p2ID;
     private final String blockProducer;
     private final long timestamp;
     private final int maxConsensusList;
+    private final ArrayList<String[]> matchedNodes;
 
 
 
-    public Block(int blockNumber, BigInteger modulo, String previousBlockHash, ArrayList<String> previousConsensusNodeList, String blockProducer, String p1ID, String p2ID) {
+    public Block(int blockNumber, BigInteger modulo, String previousBlockHash, ArrayList<String> previousConsensusNodeList, String blockProducer, ArrayList<String[]> matchedNodes) {
         this.blockNumber = blockNumber;
         this.modulo = modulo;
         this.previousBlockHash = previousBlockHash;
         this.previousConsensusNodeList = previousConsensusNodeList;
         this.blockProducer = blockProducer;
-        this.p1ID = p1ID;
-        this.p2ID = p2ID;
         this.vdfDifficulty = 100000;  // for now hardcoded, but can be decided dynamically by the network
         // block hash is calculated last since it includes all the rest of the data of the block in order to be calculated
         this.blockHash = calculateBlockHash();
         this.timestamp = Instant.now().getEpochSecond();
         this.maxConsensusList = 3;
+        this.matchedNodes = matchedNodes;
+
     }
 
 
@@ -69,14 +68,6 @@ public class Block {
     }
 
 
-    public String getP1ID() {
-        return p1ID;
-    }
-
-    public String getP2ID() {
-        return p2ID;
-    }
-
     public BigInteger getModulo() {
         return modulo;
     }
@@ -99,6 +90,14 @@ public class Block {
 
     public int getBlockNumber() {
         return blockNumber;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public ArrayList<String[]> getMatchedNodes() {
+        return matchedNodes;
     }
 
     public String getPreviousBlockHash() {

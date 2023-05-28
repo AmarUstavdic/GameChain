@@ -1,14 +1,13 @@
 package com.myproject.game.network.blockchain;
 
 import com.google.gson.Gson;
-import com.myproject.game.network.blockchain.*;
 import com.myproject.game.network.kademlia.KademliaDHT;
 import com.myproject.game.network.vdf.VDFResult;
 import com.myproject.game.network.vdf.WesolowskiVDF;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
+
 
 public class VDFService implements Runnable {
     private final Gson gson;
@@ -71,12 +70,28 @@ public class VDFService implements Runnable {
         Collections.shuffle(consensusNodes);
         consensusNodes.subList(0, lastBlock.getMaxConsensusList());
 
+
+        // MATCHED NODES FROM THE REQUEST LIST
+        ArrayList<String[]> matched = new ArrayList<>();
+        int lnt = requestList.getMatchRequests().size();
+        if (lnt % 2 != 0) {
+            lnt--; // Reduce lnt by 1 if it's an odd number
+        }
+        for (int i = 0; i < lnt; i += 2) {
+            String p1 = requestList.getMatchRequests().get(i).getPayload();
+            String p2 = requestList.getMatchRequests().get(i + 1).getPayload();
+            matched.add(new String[]{p1, p2});
+        }
+
+
+
         // Create the new block
         return new Block(lastBlock.getBlockNumber() + 1, lastBlock.getModulo(), lastBlock.getBlockHash(),
-                consensusNodes, dht.getNodeId(), null, null);
+                consensusNodes, dht.getNodeId(), matched);
     }
 
     private void processNewlyCreatedBlock(Block block) {
+        System.out.println("block sequence number: " + block.getBlockNumber());
         blockchain.addNewBlock(block);
 
         BlockchainMessage message = new BlockchainMessage(BlockchainMessageType.NEW_BLOCK,

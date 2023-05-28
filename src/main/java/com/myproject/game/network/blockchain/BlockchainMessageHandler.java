@@ -23,7 +23,6 @@ public class BlockchainMessageHandler implements Runnable {
     private final KademliaDHT dht;
     private final BlockchainInbox inbox;
     private final BlockchainOutbox outbox;
-    private final ArrayList<Block> chain;
     private final int maxRetries;
     private final int port;
     private final int connectionTimeout;
@@ -39,7 +38,6 @@ public class BlockchainMessageHandler implements Runnable {
         this.vdfService = vdfService;
         this.inbox = inbox;
         this.outbox = outbox;
-        this.chain = chain;
         this.maxRetries = maxRetries;
         this.port = port;
         this.connectionTimeout = connectionTimeout;
@@ -83,22 +81,24 @@ public class BlockchainMessageHandler implements Runnable {
                     System.out.println("synced the chain");
                     break;
                 case NEW_BLOCK:
-                    System.out.println("I have received new block");
-                    addNewBlockToChain(message);
-                    eventBus.post(EventType.PTP_ESTABLISHED);
-                    broadcastNewBlock(message);
+                    Block block = new Gson().fromJson(message.getPayload(), Block.class);
+                    if (!(block.getBlockNumber() == blockchain.getLastBlock().getBlockNumber())) {
+                        broadcastNewBlock(message);
+                        addNewBlockToChain(message);
+                    }
+
+                    checkIfImMatched(message);
+                    // eventBus.post(EventType.PTP_ESTABLISHED);
                     break;
                 case INCLUSION_REQUEST:
                     System.out.println("inclusion request sent");
                     inclusionRequestsList.cacheNewInclusionRequest(message);
                     break;
-                case RPS_MATCHMAKING_REQUEST:
-                    matchRequestList.cacheRequest(message);
-                    System.out.println("RPS request ... stored");
-                    break;
                 case TTT_MATCHMAKING_REQUEST:
                     matchRequestList.cacheRequest(message);
-                    System.out.println("TTT request stored...");
+                    System.out.println("I got a message: "+ message.getPayload());
+
+
                     break;
                 default:
                     // for the rest doing nothing
@@ -106,6 +106,26 @@ public class BlockchainMessageHandler implements Runnable {
             }
         }
     }
+
+
+    private void checkIfImMatched(BlockchainMessage message) {
+        Block block = new Gson().fromJson(message.getPayload(), Block.class);
+
+        String[] p;
+        for (String[] pair : block.getMatchedNodes()) {
+            if (pair[0].equals(dht.getNodeId()) || pair[1].equals(dht.getNodeId())) {
+                // I am mathched
+                System.out.println("IM MATCHED");
+                p = pair;
+                break;
+            }
+        }
+
+
+    }
+
+
+
 
 
     private void handleSync(BlockchainMessage message) {

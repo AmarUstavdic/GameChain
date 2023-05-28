@@ -60,9 +60,6 @@ public class BlockchainMessageSender implements Runnable {
                 case TTT_MATCHMAKING_REQUEST:
                     broadcastMessage(message);
                     break;
-                case RPS_MATCHMAKING_REQUEST:
-                    broadcastMessage(message);
-                    break;
                 default:
                     System.out.println("pass");
                     break;

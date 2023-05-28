@@ -72,9 +72,7 @@ public class Blockchain {
 
     @Subscribe
     public void handleMessage(EventType eventType) {
-
         if (eventType == EventType.ONLINE_GAME) {
-            System.out.println("im from blockchain");
             this.makeMatchmakingRequest(BlockchainMessageType.TTT_MATCHMAKING_REQUEST, dht.getNodeId());
         }
     }
@@ -109,7 +107,6 @@ public class Blockchain {
                     "0",
                     consensusList,  // list of consensus nodes
                     dht.getNodeId(),
-                    null,
                     null
             ));
         } else {
@@ -151,6 +148,7 @@ public class Blockchain {
                 requestType,
                 myID
         );
+        System.out.println("Ive clicked online: " + myID);
         try {
             outbox.addMessage(request);
         } catch (InterruptedException e) {
